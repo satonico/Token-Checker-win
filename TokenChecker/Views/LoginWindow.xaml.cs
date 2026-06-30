@@ -2,7 +2,6 @@ using System.Diagnostics;
 using System.Windows;
 using TokenChecker.Models;
 using TokenChecker.Services;
-using TokenChecker.Utilities;
 using TokenChecker.ViewModels;
 
 namespace TokenChecker.Views;
@@ -12,14 +11,17 @@ public partial class LoginWindow : Window
     private readonly string _cliCommand;
     private readonly WindowsTokenSource? _tokenSource;
     private readonly UsageViewModel _vm;
+    private readonly bool _watchClaude;
     private string? _tokenSnapshot;
     private CancellationTokenSource? _pollCts;
+    private bool _closing;
 
     public LoginWindow(string service, string cliCommand, UsageViewModel vm, WindowsTokenSource? tokenSource = null)
     {
         _cliCommand  = cliCommand;
         _tokenSource = tokenSource;
         _vm          = vm;
+        _watchClaude = tokenSource != null;
 
         InitializeComponent();
 
@@ -33,12 +35,42 @@ public partial class LoginWindow : Window
 
         Loaded += async (_, _) =>
         {
-            WindowEffects.Apply(this);
             await SnapshotCurrentTokenAsync();
             DoneBtn.IsEnabled = true;
             if (_tokenSource != null)
                 _ = PollForNewTokenAsync();
         };
+
+        Closed += (_, _) =>
+        {
+            _pollCts?.Cancel();
+            _vm.SnapshotChanged -= OnSnapshotChanged;
+        };
+
+        _vm.SnapshotChanged += OnSnapshotChanged;
+    }
+
+    // ── App-level polling による認証回復検出 ──────────────────────────────
+
+    private void OnSnapshotChanged()
+    {
+        if (_closing) return;
+        var snap = _vm.Snapshot;
+        var authError = _watchClaude
+            ? snap.ClaudeError?.Kind is DomainErrorKind.TokenMissing or DomainErrorKind.AnthropicUnauthorized
+            : snap.CodexError?.Kind  is DomainErrorKind.CodexUnauthorized or DomainErrorKind.CodexRpcError;
+        if (authError || snap.FetchedAt == DateTime.MinValue) return;
+
+        _closing = true;
+        Dispatcher.BeginInvoke(() =>
+        {
+            if (!IsLoaded) return;
+            ShowStatus("✓ ログイン完了！ウィンドウを閉じます...");
+            var timer = new System.Windows.Threading.DispatcherTimer
+                { Interval = TimeSpan.FromMilliseconds(1400) };
+            timer.Tick += (_, _) => { timer.Stop(); if (IsLoaded) Close(); };
+            timer.Start();
+        });
     }
 
     // ── Initialization ────────────────────────────────────────────────────
