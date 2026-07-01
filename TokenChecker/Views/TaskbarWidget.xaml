@@ -1,6 +1,7 @@
 <Window x:Class="TokenChecker.Views.TaskbarWidget"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:ctrl="clr-namespace:TokenChecker.Controls"
         Title="Token Checker Widget"
         Width="118"
         WindowStyle="None"
@@ -40,11 +41,11 @@
 
             <!-- Claude -->
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="✦"
-                           Foreground="#D07A42"
-                           FontSize="13"
-                           VerticalAlignment="Center"
-                           Margin="0,0,4,0"/>
+                <Grid Width="20" Height="20" Margin="0,0,4,0">
+                    <ctrl:DonutChart x:Name="ClaudeDonut"/>
+                    <TextBlock Text="✦" Foreground="#F0F0F0" FontSize="7"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Grid>
                 <TextBlock x:Name="ClaudeLabel"
                            Text="--%"
                            Foreground="#F0F0F0"
@@ -60,11 +61,11 @@
 
             <!-- Codex -->
             <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="▶"
-                           Foreground="#7A8EE0"
-                           FontSize="11"
-                           VerticalAlignment="Center"
-                           Margin="0,0,4,0"/>
+                <Grid Width="20" Height="20" Margin="0,0,4,0">
+                    <ctrl:DonutChart x:Name="CodexDonut"/>
+                    <TextBlock Text="▶" Foreground="#F0F0F0" FontSize="7"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Grid>
                 <TextBlock x:Name="CodexLabel"
                            Text="--%"
                            Foreground="#F0F0F0"
@@ -81,12 +82,20 @@
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center"
                     Margin="4,0">
-            <TextBlock Text="✦" Foreground="#D07A42" FontSize="10" Margin="0,0,2,0"/>
+            <Grid Width="16" Height="16" Margin="0,0,2,0">
+                <ctrl:DonutChart x:Name="CompactClaudeDonut"/>
+                <TextBlock Text="✦" Foreground="#F0F0F0" FontSize="6"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Grid>
             <TextBlock x:Name="CompactClaudeLabel"
                        Text="--" Foreground="#F0F0F0"
                        FontSize="12" FontWeight="SemiBold"/>
             <Rectangle Width="1" Height="14" Fill="#40FFFFFF" Margin="3,0"/>
-            <TextBlock Text="▶" Foreground="#7A8EE0" FontSize="9" Margin="0,0,2,0"/>
+            <Grid Width="16" Height="16" Margin="0,0,2,0">
+                <ctrl:DonutChart x:Name="CompactCodexDonut"/>
+                <TextBlock Text="▶" Foreground="#F0F0F0" FontSize="6"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Grid>
             <TextBlock x:Name="CompactCodexLabel"
                        Text="--" Foreground="#F0F0F0"
                        FontSize="12" FontWeight="SemiBold"/>
@@ -97,13 +106,21 @@
                     VerticalAlignment="Center"
                     HorizontalAlignment="Center">
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <TextBlock Text="&#x2726;" Foreground="#D07A42" FontSize="9" Margin="0,0,2,0"/>
+                <Grid Width="14" Height="14" Margin="0,0,2,0">
+                    <ctrl:DonutChart x:Name="VerticalClaudeDonut"/>
+                    <TextBlock Text="✦" Foreground="#F0F0F0" FontSize="5"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Grid>
                 <TextBlock x:Name="VerticalClaudeLabel"
                            Text="--" Foreground="#F0F0F0"
                            FontSize="11" FontWeight="SemiBold"/>
             </StackPanel>
             <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                <TextBlock Text="&#x25B6;" Foreground="#7A8EE0" FontSize="8" Margin="0,0,2,0"/>
+                <Grid Width="14" Height="14" Margin="0,0,2,0">
+                    <ctrl:DonutChart x:Name="VerticalCodexDonut"/>
+                    <TextBlock Text="▶" Foreground="#F0F0F0" FontSize="5"
+                               HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                </Grid>
                 <TextBlock x:Name="VerticalCodexLabel"
                            Text="--" Foreground="#F0F0F0"
                            FontSize="11" FontWeight="SemiBold"/>
