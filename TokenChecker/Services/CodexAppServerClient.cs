@@ -344,10 +344,17 @@ public sealed class CodexAppServerClient : IAsyncDisposable
                 RedirectStandardOutput = true,
                 CreateNoWindow         = true,
             })!;
-            var line = p.StandardOutput.ReadLine()?.Trim();
-            p.WaitForExit(2000);
-            if (!string.IsNullOrEmpty(line) && File.Exists(line) && IsAllowedExtension(line))
-                return line;
+            var outputTask = p.StandardOutput.ReadToEndAsync();
+            if (!p.WaitForExit(2000))
+            {
+                try { p.Kill(); } catch { }
+                return null;
+            }
+            var lines = outputTask.GetAwaiter().GetResult()
+                .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+            foreach (var line in lines)
+                if (File.Exists(line) && IsAllowedExtension(line))
+                    return line;
         }
         catch { }
 
@@ -366,13 +373,18 @@ public sealed class CodexAppServerClient : IAsyncDisposable
     {
         var appData      = Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData);
         var programFiles = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
-        return
+        var candidates   = new List<string>();
+        var nvmSymlink   = Environment.GetEnvironmentVariable("NVM_SYMLINK");
+        if (!string.IsNullOrWhiteSpace(nvmSymlink))
+            candidates.Add(Path.Combine(nvmSymlink, "codex.cmd"));
+        candidates.AddRange(
         [
             Path.Combine(appData, "npm", "codex.cmd"),
             Path.Combine(appData, "Roaming", "npm", "codex.cmd"),
             Path.Combine(programFiles, "nodejs", "codex.cmd"),
             Path.Combine(programFiles + " (x86)", "nodejs", "codex.cmd"),
-        ];
+        ]);
+        return [.. candidates];
     }
 
     public ValueTask DisposeAsync()
