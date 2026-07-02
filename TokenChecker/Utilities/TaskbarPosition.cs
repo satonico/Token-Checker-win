@@ -31,6 +31,10 @@ public static class TaskbarPosition
         double? ContentLeft,   // 中央側タスクバー項目の左端 X
         double? ContentRight); // 中央側タスクバー項目の右端 X
 
+    // AutomationElement.FindAll() は COM ラッパーを大量生成するため、タスクバー RECT が
+    // 変化していない間はキャッシュを返してフィナライザ負荷を抑える。
+    private static readonly Dictionary<int, ((int L, int T, int R, int B), Info)> _cache = new();
+
     public static Info? Get(int screenIndex = 0)
     {
         var screens = Screen.AllScreens;
@@ -43,6 +47,11 @@ public static class TaskbarPosition
         // タスクバーが自動非表示のとき幅か高さが 4px 以下になる。
         // この場合は null を返して PositionAtScreenEdge フォールバックを使わせる。
         if (tb.Bottom - tb.Top <= 4 || tb.Right - tb.Left <= 4) return null;
+
+        // タスクバーの位置・サイズが前回と同じなら AutomationElement クエリをスキップする。
+        var tbKey = (tb.Left, tb.Top, tb.Right, tb.Bottom);
+        if (_cache.TryGetValue(screenIndex, out var cached) && cached.Item1 == tbKey)
+            return cached.Item2;
 
         // 通知領域 (TrayNotifyWnd) の左端を取得 → ウィジェットをその左に置く
         var notify = FindWindowEx(taskbar, IntPtr.Zero, "TrayNotifyWnd", null);
@@ -58,7 +67,7 @@ public static class TaskbarPosition
             : TryGetClockLeft(taskbar, tb, dpi) ?? tb.Right / dpi;
         var contentBounds = TryGetContentBounds(taskbar, tb, dpi, widgetsRight, rightAnchorLeft);
 
-        return new Info(
+        var info = new Info(
             TaskbarTop:    tb.Top    / dpi,
             TaskbarLeft:   tb.Left   / dpi,
             TaskbarBottom: tb.Bottom / dpi,
@@ -68,6 +77,8 @@ public static class TaskbarPosition
             WidgetsRight:  widgetsRight,
             ContentLeft:   contentBounds.Left,
             ContentRight:  contentBounds.Right);
+        _cache[screenIndex] = (tbKey, info);
+        return info;
     }
 
     private static IntPtr FindTaskbar(Rectangle targetBounds)
